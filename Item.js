@@ -212,6 +212,8 @@ class Item {
         storage.updateItem(i)
       })
       
+      // UPDATE HIDDEN
+      storage.listOfLists().find((l) => l.domName == this.mainList).hideFinishedItems()
       
       let progress = storage.listOfLists().find((e) => e.domName == this.list)
       if (progress != undefined){
