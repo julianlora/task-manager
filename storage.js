@@ -1,36 +1,86 @@
-let listData = JSON.parse(localStorage.getItem('lists'))
-let itemData = JSON.parse(localStorage.getItem('items'))
-const listOfLists = listData != null ? listData : []
-const listOfItems = itemData != null ? itemData : []
+import Item from "./Item.js";
+import List from "./List.js";
+
+function listOfItems(){
+    let values = []
+    let items = []
+    let itemData = JSON.parse(localStorage.getItem('items'), function (key, value){
+        if (typeof value == 'object' && value != null && values.length != 0){
+            let item = new Item(
+                values[0],
+                values[1],
+                values[2],
+                values[3],
+                values[4],
+                values[5],
+                values[6],
+                values[7],
+            )
+            items.push(item)
+            values = []
+        } else {
+            values.push(value)
+        }
+    })
+    //let items = itemData != null ? itemData : []
+    return items
+}
+
+function listOfLists(){
+    let values = []
+    let lists = []
+    let listData = JSON.parse(localStorage.getItem('lists'), function (key, value){
+        if (typeof value == 'object' && value != null && values.length != 0){
+            let item = new List(
+                values[0],
+                values[1],
+                values[2],
+                values[3],
+                values[4],
+                values[5]
+            )
+            lists.push(item)
+            values = []
+        } else {
+            values.push(value)
+        }
+    })
+    return lists
+}
 
 function saveList(list) {
-    if (listOfLists.length != undefined && listOfLists.some((e) => e.name == list.name) == false){
-        listOfLists.push(list)
-        localStorage.setItem('lists', JSON.stringify(listOfLists))
+    let data = listOfLists()
+    if (data.length != undefined && data.some((e) => e.name == list.name) == false){
+        data.push(list)
+        localStorage.setItem('lists', JSON.stringify(data))
     }    
 }
 
 function saveItem(item) {
-    if (listOfItems.length != undefined && listOfItems.some((e) => e.id == item.id) == false){
-        listOfItems.push(item)
-        localStorage.setItem('items', JSON.stringify(listOfItems) )
+    
+    let data = listOfItems()
+    if (data.length != undefined && data.some((e) => e.id == item.id) == false){
+        data.push(item)
+        localStorage.setItem('items', JSON.stringify(data) )
     }
 }
 
 function removeItem(id) {
-    let index = listOfItems.findIndex((element) => element.id === id)
-    let item = listOfItems[index]
+    let data = listOfItems()
+    let index = data.findIndex((element) => element.id === id)
+    let item = data[index]
     if (item.subItems == 0){
-        listOfItems.splice(index, 1)
-        localStorage.setItem('items', JSON.stringify(listOfItems) )
+        data.splice(index, 1)
+        localStorage.setItem('items', JSON.stringify(data) )
     } else {
-        listOfItems.forEach((e) => {
+        data.forEach((e) => {
             if (e.list === id){
                 removeItem(e.id)
             }
         })
-        listOfItems.splice(index, 1)
-        localStorage.setItem('items', JSON.stringify(listOfItems) )
+        data = listOfItems()
+        data.splice(index, 1)
+        localStorage.setItem('items', JSON.stringify(data) )
     }
 }
 
@@ -43,15 +93,25 @@ function removeList(name) {
             }
         });
     }
-    let index = listOfLists.findIndex((element) => element.name === name)
-    listOfLists.splice(index, 1)
-    localStorage.setItem('lists', JSON.stringify(listOfLists) )
+    data = listOfLists()
+    let index = data.findIndex((element) => element.name === name)
+    data.splice(index, 1)
+    localStorage.setItem('lists', JSON.stringify(data) )
 }
 
 function updateItem(item) {
-    let index = listOfItems.findIndex((element) => element.id === item.id)
-    listOfItems.splice(index, 1, item)
-    localStorage.setItem('items', JSON.stringify(listOfItems) )
+    let data = listOfItems()
+    let index = data.findIndex((element) => element.id === item.id)
+    data.splice(index, 1, item)
+    localStorage.setItem('items', JSON.stringify(data) )
 }
 
-export {listOfItems, listOfLists, saveList, saveItem, removeItem, removeList, updateItem}
+function updateList(list) {
+    let data = listOfLists()
+    let index = data.findIndex((element) => element.name == list.name)
+    data.splice(index, 1, list)
+    localStorage.setItem('lists', JSON.stringify(data) )
+}
+
+
+export {listOfItems, listOfLists, saveList, saveItem, removeItem, removeList, updateItem, updateList}
