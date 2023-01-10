@@ -10,6 +10,7 @@ class Item {
       creationDate,
       subItems,
       siblings,
+      mainList
     ) {
       // Define properties:}
       this.id = id;
@@ -19,17 +20,19 @@ class Item {
       this.creationDate = creationDate;
       this.subItems = subItems;
       this.siblings = siblings;
+      this.mainList = mainList;
     }
     // Add methods like normal functions:
     
-    addItem() {
+    addItem(input = false) {
       // ADD ITEM TO DOM
       const element = document.createElement("li")
-      element.classList.add(`item-${this.id}` , `parent-${this.list}`)
+      element.classList.add(`item-${this.id}` , `parent-${this.list}`, `mainlist-${this.mainList}`)
+      
       if (this.text === ""){
         this.text = document.querySelector(`.input-${this.list}`).value
       }
-      if (this.status === "uncomplete"){
+      if (this.status == "uncomplete"){
         let content = `
           <input class="checkbox-${this.id} c${this.list}" type="checkbox">
           ${this.text}
@@ -46,25 +49,28 @@ class Item {
         `
         element.innerHTML = content
         element.setAttribute("style", "text-decoration:line-through")
+        element.classList.add('done')
       }
       document.querySelector(`.list-${this.list}`).insertAdjacentElement("beforeend", element)
 
       //SETUP CHECKBOX EVENT
       let checkbox = document.querySelector(`.checkbox-${this.id}.c${this.list}`)
       checkbox.addEventListener("change", () => {
-        this.checkboxEvent(this)
+        this.checkboxEvent(checkbox.checked)
+        this.updateProgress()
+        storage.listOfLists().find((l) => l.domName == this.mainList).hideFinishedItems()
       })
 
       //DELETE AND EXTEND BUTTON
-      let deleteButton = document.querySelector(`.delete-${this.id}-${this.list}`)
-      let extendButton = document.querySelector(`.extend-${this.id}-${this.list}`)
+      const deleteButton = document.querySelector(`.delete-${this.id}-${this.list}`)
+      const extendButton = document.querySelector(`.extend-${this.id}-${this.list}`)
       element.addEventListener("mouseover", () => {
-        deleteButton.removeAttribute("hidden")
-        extendButton.removeAttribute("hidden")
+        deleteButton.hidden = false
+        extendButton.hidden = false
       })
       element.addEventListener("mouseleave", () => {
-        deleteButton.setAttribute("hidden","hidden")
-        extendButton.setAttribute("hidden","hidden")
+        deleteButton.hidden = true
+        extendButton.hidden = true
       })
       deleteButton.addEventListener("click", () => {
         element.remove()
@@ -102,7 +108,9 @@ class Item {
       storage.saveItem(this)
       this.loadSubItems()
       this.updateProgress()
-      this.checkboxEvent(this)
+      if (input){
+        this.checkboxEvent(false)
+      }
     }
 
     addSubItem(subItem, input = true){
@@ -111,89 +119,104 @@ class Item {
         list.setAttribute("class", `list-${this.id}`)
         if (input){
           document.querySelector(`.extension-${this.id}`).insertAdjacentElement('beforebegin', list)
-          let newItem = new Item(Date.now(), document.querySelector(`.input-${this.id}`).value, this.id, "uncomplete")
-          newItem.addItem(newItem)
+          let newItem = new Item(
+            Date.now(), 
+            document.querySelector(`.input-${this.id}`).value, 
+            this.id, 
+            "uncomplete",
+            (new Date()).toDateString(),
+            0,
+            0, 
+            this.mainList)
+          newItem.addItem(input = true)
           document.querySelector(`.input-${this.id}`).value = ""
         } else {
           document.querySelector(`.item-${this.id}.parent-${this.list}`).insertAdjacentElement('beforeend', list)
-          let newItem = new Item(subItem.id, subItem.text, this.id, subItem.status)
-          newItem.addItem(newItem)
+          let newItem = new Item(
+            subItem.id, 
+            subItem.text,
+            this.id, 
+            subItem.status,
+            subItem.creationDate,
+            subItem.subItems, 
+            subItem.siblings, 
+            this.mainList)
+          newItem.addItem()
         }
+        
       }
     }
 
     loadSubItems(){
-      storage.listOfItems.forEach((i) => {
+      storage.listOfItems().forEach((i) => {
         if (this.id === i.list){
           this.addSubItem(i, false)
         }
       })
     }
 
-    checkboxEvent(item){ // NO USA 'THIS' !!!!
-      this.updateProgress.call(item)
-      let checkbox = document.querySelector(`.checkbox-${item.id}.c${item.list}`)
-      let element = document.querySelector(`.item-${item.id}.parent-${item.list}`)
-      let parent = storage.listOfItems.find((e) => e.id == item.list)
-      let clear = false
-      if (checkbox.checked){
+    checkboxEvent(checked){
+      this.subItems = Array.from(document.querySelectorAll(`.parent-${this.id}`)).length
+      this.siblings = Array.from(document.querySelectorAll(`.parent-${this.list}`)).length
+
+      let checkbox = document.querySelector(`.checkbox-${this.id}.c${this.list}`)
+      let element = document.querySelector(`.item-${this.id}.parent-${this.list}`)
+      let parent = storage.listOfItems().find((e) => e.id == this.list)
+      if (checked){ 
+        checkbox.checked = true
         element.setAttribute("style", "text-decoration:line-through")
         element.classList.add("done")
-        item.status = "done"
-        if (parent != undefined 
-          && Array.from(document.querySelectorAll(`.c${item.list}`)).filter(i => i.checked).length == item.siblings 
-          && parent.status == "uncomplete"){
-          
-          document.querySelector(`.checkbox-${parent.id}.c${parent.list}`).checked = true
-          this.checkboxEvent(parent)
-        }
-      } else { 
-        element.classList.remove("done")
-        element.removeAttribute("style")
-        item.status = "uncomplete"
-        let checkboxes = document.querySelectorAll(`.c${item.id}`)
-        let values = Array.from(checkboxes)
-        if (values.filter(i => i.checked).length == item.subItems){
-          clear = true
-        }
-        if (parent != undefined && parent.status == "done"){
-          document.querySelector(`.checkbox-${parent.id}.c${parent.list}`).checked = false
-          this.checkboxEvent(parent)
-        }
-      }
-      this.updateProgress.call(item)
-      if (item.subItems != 0){ // Check its subitems
-        storage.listOfItems.forEach((i) => {
-          if (i.list == item.id){
-            let box = document.querySelector(`.checkbox-${i.id}.c${i.list}`)
-            if (!clear){
-              if (item.status == "done"){ /// ACA
-                box.checked = true
-                this.checkboxEvent(i)
-              }
-            } else {
-              box.checked = false
-              this.checkboxEvent(i)
+        this.status = 'done'
+        storage.updateItem(this)
+        if (this.subItems != 0){
+          storage.listOfItems().forEach((i) => {
+            if (i.list == this.id && i.status == 'uncomplete'){
+              i.checkboxEvent(checked)
             }
+          })
+        }
+        if (parent != undefined
+        && parent.subItems == Array.from(document.querySelectorAll(`.c${this.list}`)).filter(i => i.checked).length
+        && parent.status == 'uncomplete'){
+          parent.checkboxEvent(checked)
+        }
+      } else {
+        checkbox.checked = false
+        element.removeAttribute("style")
+        element.classList.remove("done")
+        this.status = 'uncomplete'
+        storage.updateItem(this)
+        if (this.subItems != 0 && this.subItems == Array.from(document.querySelectorAll(`.c${this.id}`)).filter(i => i.checked).length){ // only if all subitems are done
+          storage.listOfItems().forEach((i) => {
+            if (i.list == this.id && i.status == 'done'){ 
+              i.checkboxEvent(checked)
+            }
+          })
+        }
+        if (parent != undefined
+          && parent.status == 'done'){
+            parent.checkboxEvent(checked)
           }
-        })
       }
-      storage.updateItem(item)
+      storage.updateItem(this)
     }
 
     updateProgress(){
-      storage.listOfItems.forEach((i) => {
-        if (i.list == this.list){
-          i.subItems = Array.from(document.querySelectorAll(`.parent-${this.id}`)).length
-          i.siblings = Array.from(document.querySelectorAll(`.parent-${this.list}`)).length
-          storage.updateItem(i)
+
+      storage.listOfItems().forEach((i) => {
+        if (i.mainList == this.mainList){
+
+          i.siblings = Array.from(document.querySelectorAll(`.parent-${i.list}`)).length
+          i.subItems = Array.from(document.querySelectorAll(`.parent-${i.id}`)).length
         }
+        storage.updateItem(i)
       })
       
-      let progress = storage.listOfLists.find((e) => e.domName == this.list)
+      
+      let progress = storage.listOfLists().find((e) => e.domName == this.list)
       if (progress != undefined){
         let total = 0, cant = 0
-        storage.listOfItems.forEach((element) => {
+        storage.listOfItems().forEach((element) => {
           if (element.list === this.list){
             total++
             if (element.status === "done"){
@@ -220,4 +243,3 @@ class Item {
   }
   
   export default Item;
-  
