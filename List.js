@@ -71,7 +71,6 @@ class List {
     this.optionsMenu(newList)
 
     //SAVE IN ARRAY AND LOCAL STORAGE
-    console.log(this)
     storage.saveList(this)
   }
 
