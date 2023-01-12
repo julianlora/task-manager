@@ -40,25 +40,13 @@ class List {
         <button class="remove-${this.domName}">x</button>
       </h1>
       <ul class="list-${this.domName}"=></ul>
-      <label>
-        New item
-        <input class="input-${this.domName}">
-        <button class="add-${this.domName}">add</button>
-      </label>
     `;
     newList.innerHTML = content
     document.querySelector("main").append(newList)
     document.querySelector(".new-list").value = ""
 
-    //SETUP ITEM 'ADD' BUTTON
-    const listButton = document.querySelector(`.add-${this.domName}`)
-    listButton.addEventListener("click", () => {
-      if (document.querySelector(`.input-${this.domName}`).value !== ""){
-        //ADD NEW ITEM
-        this.createItem()
-        document.querySelector(`.input-${this.domName}`).value = ""
-      }
-    }, false)
+    //SETUP NEW ITEM INPUT
+    this.newItemInput()
     
     //SETUP REMOVE LIST BUTTON
     let removeButton = document.querySelector(`.remove-${this.domName}`)
@@ -74,7 +62,42 @@ class List {
     storage.saveList(this)
   }
 
-  createItem(e) {
+  newItemInput(){
+
+    if (document.querySelector(`.newitem-${this.domName}`) != undefined){ // if it exists already
+      document.querySelector(`.newitem-${this.domName}`).remove()
+    }
+
+    const newItemInput = document.createElement('li')
+    newItemInput.classList.add(`newitem-${this.domName}`)
+    let content = `
+      <input class="input-${this.domName}">
+      <button class="additem-${this.domName}">Add as item</button>
+      <button class="addsublist-${this.domName}">Add as sublist</button>
+    `
+    newItemInput.innerHTML = content
+    document.querySelector(`.list-${this.domName}`).insertAdjacentElement('beforeend', newItemInput)
+
+
+    const listButton = document.querySelector(`.additem-${this.domName}`)
+    listButton.addEventListener("click", () => {
+      if (document.querySelector(`.input-${this.domName}`).value !== ""){
+        //ADD NEW ITEM
+        this.createItem()
+      }
+    })
+
+    const sublistButton = document.querySelector(`.addsublist-${this.domName}`)
+    sublistButton.addEventListener("click", () => {
+      if (document.querySelector(`.input-${this.domName}`).value !== ""){
+        //ADD NEW SUBLIST
+        
+        this.createItem(undefined, 'sublist')
+      }
+    })
+  }
+
+  createItem(e, type) {
     //CREATE ITEM
     if (e == undefined){
       const item = new Item(
@@ -85,9 +108,10 @@ class List {
         (new Date()).toDateString(),
         0,
         0,
-        this.domName
+        this.domName,
+        type == 'sublist' ? type : 'item'
       )
-      item.addItem()
+      item.addItem(true, item.type)
     } else {
       const item = new Item(
         e.id,
@@ -98,8 +122,10 @@ class List {
         e.subItems,
         e.siblings,
         e.mainList,
+        e.type
       )
-      item.addItem()
+      item.addItem(false, e.type)
+      
     }
     
   }
@@ -115,7 +141,6 @@ class List {
       <div id="myDropdown-${this.domName}" class="dropdown-content">
         <button class="hidetasks-${this.domName} show">Hide finished tasks</button>
         <button class="hideprogress-${this.domName} show">Hide progress</button>
-        <a href="#contact">Contact</a>
       </div>
     `
     optionsElement.innerHTML = content
@@ -156,6 +181,26 @@ class List {
     })
 
     // HIDE PROGRESS
+
+    // ADD SUBLIST
+    const sublistOption = document.querySelector(`.addsublist-${this.domName}`)
+    sublistOption.addEventListener("click", () => {
+      sublistOption.classList.add("open")
+
+      let sublistInput = document.createElement('li')
+      sublistInput.classList.add(`newsublist-${this.domName}`)
+      let content = `
+        <input class="newsublist-input-${this.domName}">
+        <button class="newsublist-button-${this.domName}">
+        Add sublist
+        </button>
+      `
+      sublistInput.innerHTML = content
+      document.querySelector(`.list-${this.domName}`).insertAdjacentElement('beforeend', sublistInput)
+
+
+    })
+
 
   }
 
