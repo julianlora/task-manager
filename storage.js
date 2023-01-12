@@ -15,6 +15,7 @@ function listOfItems(){
                 values[5],
                 values[6],
                 values[7],
+                values[8],
             )
             items.push(item)
             values = []
@@ -68,19 +69,21 @@ function saveItem(item) {
 function removeItem(id) {
     let data = listOfItems()
     let index = data.findIndex((element) => element.id === id)
-    let item = data[index]
-    if (item.subItems == 0){
-        data.splice(index, 1)
-        localStorage.setItem('items', JSON.stringify(data) )
-    } else {
-        data.forEach((e) => {
-            if (e.list === id){
-                removeItem(e.id)
-            }
-        })
-        data = listOfItems()
-        data.splice(index, 1)
-        localStorage.setItem('items', JSON.stringify(data) )
+    if (index != (-1)){
+        let item = data[index]
+        if (item.subItems == 0){
+            data.splice(index, 1)
+            localStorage.setItem('items', JSON.stringify(data) )
+        } else {
+            data.forEach((e) => {
+                if (e.list === id){
+                    removeItem(e.id)
+                }
+            })
+            data = listOfItems()
+            data.splice(index, 1)
+            localStorage.setItem('items', JSON.stringify(data) )
+        }
     }
 }
 
@@ -95,22 +98,28 @@ function removeList(name) {
     }
     data = listOfLists()
     let index = data.findIndex((element) => element.name === name)
-    data.splice(index, 1)
-    localStorage.setItem('lists', JSON.stringify(data) )
+    if (index != (-1)){
+        data.splice(index, 1)
+        localStorage.setItem('lists', JSON.stringify(data) )
+    }
 }
 
 function updateItem(item) {
     let data = listOfItems()
     let index = data.findIndex((element) => element.id === item.id)
-    data.splice(index, 1, item)
-    localStorage.setItem('items', JSON.stringify(data) )
+    if (index != (-1)){
+        data.splice(index, 1, item)
+        localStorage.setItem('items', JSON.stringify(data) )
+    }
 }
 
 function updateList(list) {
     let data = listOfLists()
     let index = data.findIndex((element) => element.name == list.name)
-    data.splice(index, 1, list)
-    localStorage.setItem('lists', JSON.stringify(data) )
+    if (index != (-1)){
+        data.splice(index, 1, list)
+        localStorage.setItem('lists', JSON.stringify(data) )
+    }
 }
 
 
