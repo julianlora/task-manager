@@ -104,7 +104,7 @@ class List {
         Date.now(),
         document.querySelector(`.input-${this.domName}`).value,
         this.domName,
-        "uncomplete",
+        type == "sublist" ? "done" : "uncomplete",
         (new Date()).toDateString(),
         0,
         0,
@@ -197,11 +197,7 @@ class List {
       `
       sublistInput.innerHTML = content
       document.querySelector(`.list-${this.domName}`).insertAdjacentElement('beforeend', sublistInput)
-
-
     })
-
-
   }
 
   hideFinishedItems(){
