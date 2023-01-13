@@ -37,18 +37,22 @@ class Item {
       if (this.type == 'item'){
         if (this.status == "uncomplete"){
           let content = `
-            <input class="checkbox-${this.id} c${this.list}" type="checkbox">
-            ${this.text}
-            <button class="extend-${this.id}-${this.list}" hidden>v</button>
-            <button class="delete-${this.id}-${this.list}" hidden>x</button>
+            <div class="root r${this.id}">
+              <input class="checkbox-${this.id} c${this.list}" type="checkbox">
+              <span class="text t${this.id}">${this.text}</span>
+              <button class="extend e${this.id}" hidden>v</button>
+              <button class="delete d${this.id}" hidden>x</button>
+            </div>
           `
           element.innerHTML = content
         } else {
           let content = `
-            <input class="checkbox-${this.id} c${this.list}" type="checkbox" checked>
-            ${this.text}
-            <button class="extend-${this.id}-${this.list}" hidden>v</button>
-            <button class="delete-${this.id}-${this.list}" hidden>x</button>
+            <div class="root r${this.id}">
+              <input class="checkbox-${this.id} c${this.list}" type="checkbox" checked>
+              <span class="text t${this.id}">${this.text}</span>
+              <button class="extend e${this.id}" hidden>v</button>
+              <button class="delete d${this.id}" hidden>x</button>
+            </div>
           `
           element.innerHTML = content
           element.setAttribute("style", "text-decoration:line-through")
@@ -59,9 +63,11 @@ class Item {
         this.createCheckbox()
       } else {
         let content = `
-          <b>${this.text}</b>
-          <button class="extend-${this.id}-${this.list}" hidden>v</button>
-          <button class="delete-${this.id}-${this.list}" hidden>x</button>
+          <div class="root r${this.id}">
+            <b><span class="text t${this.id}">${this.text}</span></b>
+            <button class="extend e${this.id}" hidden>v</button>
+            <button class="delete d${this.id}" hidden>x</button>
+          </div>
         `
         element.innerHTML = content
         element.classList.add('sublist')
@@ -74,54 +80,10 @@ class Item {
       //SAVE ITEM IN LOCAL STORAGE
       storage.saveItem(this)
       this.loadSubItems()
-      this.updateProgress()
+      this.updateProgress(input)
       if (input && this.type == 'item'){
         this.checkboxEvent(false)
       }
-    }
-
-    addSubItem(subItem, input = true){
-      if (input == true ? document.querySelector(`.input-${this.id}`).value !== "" : true){
-        let list = document.createElement('ul')
-        list.setAttribute("class", `list-${this.id}`)
-        if (input){
-          document.querySelector(`.extension-${this.id}`).insertAdjacentElement('beforebegin', list)
-          let newItem = new Item(
-            Date.now(), 
-            document.querySelector(`.input-${this.id}`).value, 
-            this.id, 
-            "uncomplete",
-            (new Date()).toDateString(),
-            0,
-            0, 
-            this.mainList,
-            'item')
-          newItem.addItem(input = true)
-          document.querySelector(`.input-${this.id}`).value = ""
-        } else {
-          document.querySelector(`.item-${this.id}.parent-${this.list}`).insertAdjacentElement('beforeend', list)
-          let newItem = new Item(
-            subItem.id, 
-            subItem.text,
-            this.id, 
-            subItem.status,
-            subItem.creationDate,
-            subItem.subItems, 
-            subItem.siblings, 
-            this.mainList,
-            subItem.type)
-          newItem.addItem()
-        }
-        
-      }
-    }
-
-    loadSubItems(){
-      storage.listOfItems().forEach((i) => {
-        if (this.id === i.list){
-          this.addSubItem(i, false)
-        }
-      })
     }
 
     createCheckbox(){
@@ -134,9 +96,7 @@ class Item {
     }
 
     checkboxEvent(checked){
-      this.subItems = Array.from(document.querySelectorAll(`.parent-${this.id}`)).length
-      this.siblings = Array.from(document.querySelectorAll(`.parent-${this.list}`)).length
-
+      this.updateProgress() // update subitems and siblings
       let checkbox = document.querySelector(`.checkbox-${this.id}.c${this.list}`)
       let element = document.querySelector(`.item-${this.id}.parent-${this.list}`)
       let parent = storage.listOfItems().find((e) => e.id == this.list)
@@ -154,10 +114,17 @@ class Item {
           })
         }
         if (parent != undefined
-        && parent.type == 'item'
         && parent.subItems == Array.from(document.querySelectorAll(`.c${this.list}`)).filter(i => i.checked).length
         && parent.status == 'uncomplete'){
-          parent.checkboxEvent(checked)
+          if (parent.type == 'item'){
+            parent.checkboxEvent(checked)
+          } else {
+            let parentElement = document.querySelector(`.item-${parent.id}.parent-${parent.list}`)
+            parentElement.classList.add("done")
+            parent.status = 'done'
+            storage.updateItem(parent)
+            parent.updateProgress() 
+          }
         }
       } else {
         checkbox.checked = false
@@ -173,41 +140,114 @@ class Item {
           })
         }
         if (parent != undefined
-          && parent.type == 'item'
           && parent.status == 'done'){
-            parent.checkboxEvent(checked)
+            if (parent.type == 'item'){
+              parent.checkboxEvent(checked)
+            } else {
+              let parentElement = document.querySelector(`.item-${parent.id}.parent-${parent.list}`)
+              parentElement.classList.remove('done')
+              parent.status = 'uncomplete'
+              storage.updateItem(parent)
+              parent.updateProgress()
+            }
           }
       }
       storage.updateItem(this)
     }
 
     createItemButtons(element){
-      const deleteButton = document.querySelector(`.delete-${this.id}-${this.list}`)
-      const extendButton = document.querySelector(`.extend-${this.id}-${this.list}`)
+
+      const deleteButton = document.querySelector(`.delete.d${this.id}`)
+      const extendButton = document.querySelector(`.extend.e${this.id}`)
+
+      //EDIT
+      let textElement = document.querySelector(`.text.t${this.id}`)
+      textElement.addEventListener("click", (event) => {
+        if (!element.classList.contains('editing') && window.getSelection().isCollapsed){
+          const rootElement = document.querySelector(`.root.r${this.id}`)
+          element.classList.add('editing')
+          rootElement.hidden = true
+          let edit = document.createElement('li')
+          edit.classList.add('edit', `e${this.id}`)
+          let content = `
+            <input class="inputedit i${this.id}" value="${this.text}">
+            <button class="saveedit s${this.id}">Save</button>
+            <button class="canceledit c${this.id}">Cancel</button>
+          `
+          edit.innerHTML = content
+          rootElement.insertAdjacentElement('afterend', edit)
+
+          document.querySelector(`.saveedit.s${this.id}`).addEventListener("click",() => {
+            if (document.querySelector(`.inputedit.i${this.id}`).value != ""){
+              this.text = document.querySelector(`.inputedit.i${this.id}`).value
+            }
+            storage.updateItem(this)
+            document.querySelector(`.text.t${this.id}`).innerText = this.text
+            element.classList.remove('editing')
+            rootElement.hidden = false
+            edit.remove()
+          })
+
+          document.querySelector(`.canceledit.c${this.id}`).addEventListener("click", () => {
+            element.classList.remove('editing')
+            rootElement.hidden = false
+            edit.remove()
+          })
+
+          // if (Array.from(document.querySelectorAll('.editing')).length > 1){
+          //   Array.from(document.querySelectorAll('.editing')).forEach((e) => {
+          //     if (e != element){
+          //       if (document.querySelector(`.inputedit.i${e.classList[]}`).value == ""){
+          //         cancelEdit()
+          //       } else if (document.querySelector(`.inputedit`).value != this.text){
+          //         saveEdit()
+          //       } else {
+          //         cancelEdit()
+          //       }
+          //     }
+          //   })
+          // }
+
+          // window.onclick = (event) => {
+          //   if (!event.target.matches(`.edit`)){
+          //     //console.log('si')
+          //   }
+          // }
+        }
+        event.stopPropagation()
+      })
+      // BUTTON VISIBILITY
       element.addEventListener("mouseover", () => {
-        deleteButton.hidden = false
-        extendButton.hidden = false
+        if (!element.classList.contains('editing')){
+          deleteButton.hidden = false
+          extendButton.hidden = false
+        }
       })
       element.addEventListener("mouseleave", () => {
         deleteButton.hidden = true
         extendButton.hidden = true
       })
+      // DELETE
       deleteButton.addEventListener("click", () => {
         element.remove()
         storage.removeItem(this.id)
         this.updateProgress()
+        if (this.siblings == 1 && this.list != this.mainList) { // if it's the only subitem and its parent it's not the mainList remove unnecesary <ul> element
+          document.querySelector(`.list-${this.list}`).remove()
+        }
       })
+      // INPUT SUBITEM
       extendButton.addEventListener("click", () => {
-        if (!extendButton.classList.contains("opened")){
-          extendButton.classList.add("opened")
+        if (!extendButton.classList.contains("open")){
+          extendButton.classList.add("open")
           extendButton.innerText = "^"
-          let extension = document.createElement('label')
-          extension.setAttribute("class", `extension-${this.id}`)
+          let extension = document.createElement('ul')
+          extension.setAttribute("class", `extension e${this.id}`)
           let content = `
-            <br>
-            New item
-            <input class="input-${this.id}">
-            <button class="add-${this.id}">add</button>
+            <li>
+              <input class="input-${this.id}">
+              <button class="add-${this.id}">Add subitem</button>
+            </li>
           `;
           extension.innerHTML = content
           element.insertAdjacentElement("beforeend", extension)
@@ -216,29 +256,105 @@ class Item {
           addButton.addEventListener("click", () => {
             this.addSubItem(this)
           })
-
+          // CLOSE INPUT
+          window.onclick = (event) => {
+            if (Array.from(document.querySelectorAll(`.extension`)).length > 1){
+              Array.from(document.querySelectorAll(`.extension`)).forEach((e) => {
+                if (e.classList != extension.classList){
+                  document.querySelector(`.extension.${e.classList[1]}`).remove()
+                  document.querySelector(`.extend.${e.classList[1]}`).innerText = "v"
+                  document.querySelector(`.extend.${e.classList[1]}`).classList.remove("open")
+                }
+              })
+            }
+            if ((!event.target.matches(`.extension.e${this.id}`)
+            && !event.target.matches(`.extend.e${this.id}`) 
+            && extendButton.classList.contains('open')
+            && !event.target.matches(`.input-${this.id}`)
+            && !event.target.matches(`.add-${this.id}`))) {
+              document.querySelector(`.extension.e${this.id}`).remove()
+              extendButton.innerText = "v"
+              extendButton.classList.remove("open")
+            }
+          }
         } else {
-          document.querySelector(`.extension-${this.id}`).remove()
+          document.querySelector(`.extension.e${this.id}`).remove()
           extendButton.innerText = "v"
-          extendButton.classList.remove("opened")
+          extendButton.classList.remove("open")
+        }
+      })
+
+    }
+
+    loadSubItems(){
+      storage.listOfItems().forEach((i) => {
+        if (this.id === i.list){
+          this.addSubItem(i, false)
         }
       })
     }
 
-    updateProgress(){
+    addSubItem(subItem, input = true){
+      if (input == true ? document.querySelector(`.input-${this.id}`).value !== "" : true){
+        
+        this.subItems = Array.from(document.querySelectorAll(`.parent-${this.id}`)).length // to know the updated subitems amount (upgradeProgress was causing trouble)
+
+        if (this.subItems == 0){ // add a new <ul> only if its the first subitem to add
+          let list = document.createElement('ul')
+          list.setAttribute("class", `list-${this.id}`)
+          if (input){
+            document.querySelector(`.extension.e${this.id}`).insertAdjacentElement('beforebegin', list)
+          } else {
+            document.querySelector(`.item-${this.id}.parent-${this.list}`).insertAdjacentElement('beforeend', list)
+          }
+        }
+    
+        if (input){
+          let newItem = new Item(
+            Date.now(), 
+            document.querySelector(`.input-${this.id}`).value, 
+            this.id, 
+            "uncomplete",
+            (new Date()).toDateString(),
+            0,
+            0, 
+            this.mainList,
+            'item')
+          newItem.addItem(input = true)
+          document.querySelector(`.input-${this.id}`).value = ""
+        } else {
+          let newItem = new Item(
+            subItem.id, 
+            subItem.text,
+            this.id, 
+            subItem.status,
+            subItem.creationDate,
+            subItem.subItems, 
+            subItem.siblings, 
+            this.mainList,
+            subItem.type)
+          newItem.addItem()
+        }
+        
+      }
+    }
+
+    updateProgress(input = false){
 
       // UPDATE ITEM DATA
-      storage.updateItem(this)
+      if (storage.updateItem(this) == 0 || input){ // if it changed
+        this.subItems = Array.from(document.querySelectorAll(`.parent-${this.id}`)).length
+        this.siblings = Array.from(document.querySelectorAll(`.parent-${this.list}`)).length
+        // UPDATE RELATED ITEMS DATA
+        storage.listOfItems().forEach((i) => {
+          if (i.mainList == this.mainList){
 
-      // UPDATE RELATED ITEMS DATA
-      storage.listOfItems().forEach((i) => {
-        if (i.mainList == this.mainList){
-
-          i.siblings = Array.from(document.querySelectorAll(`.parent-${i.list}`)).length
-          i.subItems = Array.from(document.querySelectorAll(`.parent-${i.id}`)).length
-        }
-        storage.updateItem(i)
-      })
+            i.siblings = Array.from(document.querySelectorAll(`.parent-${i.list}`)).length
+            i.subItems = Array.from(document.querySelectorAll(`.parent-${i.id}`)).length
+          }
+          storage.updateItem(i)
+        })
+      }
       
       // UPDATE ITEM VISIBILITY
       storage.listOfLists().find((l) => l.domName == this.mainList).hideFinishedItems()
@@ -248,7 +364,7 @@ class Item {
       if (progress != undefined){
         let total = 0, cant = 0
         storage.listOfItems().forEach((element) => {
-          if (element.list == this.list && element.type != 'sublist'){
+          if (element.list == this.list){
             total++
             if (element.status == "done"){
               cant++
