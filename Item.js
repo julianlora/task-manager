@@ -30,6 +30,7 @@ class Item {
       // ADD ITEM TO DOM
       const element = document.createElement("li")
       element.classList.add(`item-${this.id}` , `parent-${this.list}`, `mainlist-${this.mainList}`)
+      element.setAttribute('id', this.id)
 
       if (this.text == ""){
         this.text = document.querySelector(`.input-${this.list}`).value
@@ -157,15 +158,13 @@ class Item {
 
     createItemButtons(element){
 
-      const deleteButton = document.querySelector(`.delete.d${this.id}`)
-      const extendButton = document.querySelector(`.extend.e${this.id}`)
-
       //EDIT
       let textElement = document.querySelector(`.text.t${this.id}`)
       textElement.addEventListener("click", (event) => {
+
         if (!element.classList.contains('editing') && window.getSelection().isCollapsed){
           const rootElement = document.querySelector(`.root.r${this.id}`)
-          element.classList.add('editing')
+          element.classList.add('editing', 'open')
           rootElement.hidden = true
           let edit = document.createElement('li')
           edit.classList.add('edit', `e${this.id}`)
@@ -177,45 +176,43 @@ class Item {
           edit.innerHTML = content
           rootElement.insertAdjacentElement('afterend', edit)
 
+          // save
           document.querySelector(`.saveedit.s${this.id}`).addEventListener("click",() => {
-            if (document.querySelector(`.inputedit.i${this.id}`).value != ""){
-              this.text = document.querySelector(`.inputedit.i${this.id}`).value
-            }
-            storage.updateItem(this)
-            document.querySelector(`.text.t${this.id}`).innerText = this.text
-            element.classList.remove('editing')
-            rootElement.hidden = false
-            edit.remove()
+            saveEdit(element)
           })
 
+          //cancel
           document.querySelector(`.canceledit.c${this.id}`).addEventListener("click", () => {
-            element.classList.remove('editing')
-            rootElement.hidden = false
-            edit.remove()
+            cancelEdit(element)
           })
 
-          // if (Array.from(document.querySelectorAll('.editing')).length > 1){
-          //   Array.from(document.querySelectorAll('.editing')).forEach((e) => {
-          //     if (e != element){
-          //       if (document.querySelector(`.inputedit.i${e.classList[]}`).value == ""){
-          //         cancelEdit()
-          //       } else if (document.querySelector(`.inputedit`).value != this.text){
-          //         saveEdit()
-          //       } else {
-          //         cancelEdit()
-          //       }
-          //     }
-          //   })
-          // }
+          //open another edit
+          if (Array.from(document.querySelectorAll('.editing')).length > 1){
+            Array.from(document.querySelectorAll('.editing')).forEach((e) => {
+              if (e != element){
+                saveEdit(e)
+              }
+            })
+          }
 
-          // window.onclick = (event) => {
-          //   if (!event.target.matches(`.edit`)){
-          //     //console.log('si')
-          //   }
-          // }
+          // open another input
+          if (Array.from(document.querySelectorAll('.extension')).length > 0){
+            let openElement = document.querySelector('.extension')
+            closeInput(openElement.classList[1])
+          }
+
+          // click outside
+          window.onclick = (event) => {
+            if (!event.target.matches(`.inputedit`) && !event.target.matches(`.saveedit`) && !event.target.matches(`.canceledit`) && Array.from(document.querySelectorAll(`.editing`)).length > 0){
+              saveEdit(element)
+            }
+          }
         }
         event.stopPropagation()
       })
+
+      const deleteButton = document.querySelector(`.delete.d${this.id}`)
+      const extendButton = document.querySelector(`.extend.e${this.id}`)
       // BUTTON VISIBILITY
       element.addEventListener("mouseover", () => {
         if (!element.classList.contains('editing')){
@@ -239,6 +236,7 @@ class Item {
       // INPUT SUBITEM
       extendButton.addEventListener("click", () => {
         if (!extendButton.classList.contains("open")){
+          
           extendButton.classList.add("open")
           extendButton.innerText = "^"
           let extension = document.createElement('ul')
@@ -261,9 +259,7 @@ class Item {
             if (Array.from(document.querySelectorAll(`.extension`)).length > 1){
               Array.from(document.querySelectorAll(`.extension`)).forEach((e) => {
                 if (e.classList != extension.classList){
-                  document.querySelector(`.extension.${e.classList[1]}`).remove()
-                  document.querySelector(`.extend.${e.classList[1]}`).innerText = "v"
-                  document.querySelector(`.extend.${e.classList[1]}`).classList.remove("open")
+                  closeInput(e.classList[1])
                 }
               })
             }
@@ -272,15 +268,17 @@ class Item {
             && extendButton.classList.contains('open')
             && !event.target.matches(`.input-${this.id}`)
             && !event.target.matches(`.add-${this.id}`))) {
-              document.querySelector(`.extension.e${this.id}`).remove()
-              extendButton.innerText = "v"
-              extendButton.classList.remove("open")
+              closeInput(`e${this.id}`)
             }
           }
         } else {
-          document.querySelector(`.extension.e${this.id}`).remove()
-          extendButton.innerText = "v"
-          extendButton.classList.remove("open")
+          closeInput(`e${this.id}`)
+        }
+
+        // open another input
+        if (Array.from(document.querySelectorAll('.editing')).length > 0){ // if there is another input open
+          let openElement = document.querySelector('.editing')
+          saveEdit(openElement)
         }
       })
 
@@ -390,6 +388,34 @@ class Item {
         let daysSinceCreated = Math.floor(elapsed / (1000 * 3600 * 24));
         return daysSinceCreated;
     }
+  }
+
+  const cancelEdit = (editedElement) => {
+    editedElement.classList.remove('editing', 'open')
+    document.querySelector(`.root.r${editedElement.id}`).hidden = false
+    document.querySelector(`.edit.e${editedElement.id}`).remove()
+  }
+
+  const saveEdit = (editedElement) => {
+    let editedItem = storage.listOfItems().find((i) => i.id == editedElement.id)
+    let inputText = document.querySelector(`.inputedit.i${editedItem.id}`).value
+    if (inputText != "" && inputText != editedItem.text){
+      editedItem.text = inputText
+      storage.updateItem(editedItem)
+      document.querySelector(`.text.t${editedItem.id}`).innerText = editedItem.text
+      editedElement.classList.remove('editing', 'open')
+      document.querySelector(`.root.r${editedElement.id}`).hidden = false
+      document.querySelector(`.edit.e${editedElement.id}`).remove()
+    } else {
+      cancelEdit(editedElement)
+    }
+  }
+
+  const closeInput = (id) => {
+    let extendButton = document.querySelector(`.extend.${id}`)
+    document.querySelector(`.extension.${id}`).remove()
+    extendButton.innerText = "v"
+    extendButton.classList.remove("open")
   }
   
   export default Item;
