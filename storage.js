@@ -23,7 +23,6 @@ function listOfItems(){
             values.push(value)
         }
     })
-    //let items = itemData != null ? itemData : []
     return items
 }
 
@@ -87,29 +86,50 @@ function removeItem(id) {
     }
 }
 
-function removeList(name) {
-    let data = JSON.parse(localStorage.getItem('items'))
-    if (data != null){
-        data.forEach((element) => {
-            if (element.list === name){
-                removeItem(element.id)
-            }
-        });
+function removeList(domName) {
+    if (listOfLists().length == 1){
+        localStorage.clear()
+    } else {
+        let data = JSON.parse(localStorage.getItem('items'))
+        if (data != null){
+            data.forEach((element) => {
+                if (element.list === domName){
+                    removeItem(element.id)
+                }
+            });
+        }
+        data = listOfLists()
+        let index = data.findIndex((element) => element.domName === domName)
+        if (index != (-1)){
+            data.splice(index, 1)
+            localStorage.setItem('lists', JSON.stringify(data) )
+        }
     }
-    data = listOfLists()
-    let index = data.findIndex((element) => element.name === name)
-    if (index != (-1)){
-        data.splice(index, 1)
-        localStorage.setItem('lists', JSON.stringify(data) )
-    }
+    
 }
 
 function updateItem(item) {
     let data = listOfItems()
     let index = data.findIndex((element) => element.id === item.id)
     if (index != (-1)){
-        data.splice(index, 1, item)
-        localStorage.setItem('items', JSON.stringify(data) )
+        let flag = 0
+        for (var prop in item) {
+            if (Object.prototype.hasOwnProperty.call(item, prop)) {
+                if (item[prop] != data[index][prop]){
+                    flag = 1
+                    break
+                }
+            }
+        }
+        if (flag == 1){ // changed
+            data.splice(index, 1, item)
+            localStorage.setItem('items', JSON.stringify(data))
+            return 0
+        } else { // no changes
+            return 1
+        }
+    } else { // not found
+        return -1
     }
 }
 
@@ -121,6 +141,5 @@ function updateList(list) {
         localStorage.setItem('lists', JSON.stringify(data) )
     }
 }
-
 
 export {listOfItems, listOfLists, saveList, saveItem, removeItem, removeList, updateItem, updateList}
