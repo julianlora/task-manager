@@ -37,7 +37,7 @@ class List {
       <h1 class="title-${this.domName}">
         ${this.name}
         <meter class="progress-${this.domName}"></meter>
-        <button class="remove-${this.domName}">x</button>
+        <button class="removelist r${this.domName}">x</button>
       </h1>
       <ul class="list-${this.domName}"=></ul>
     `;
@@ -49,7 +49,7 @@ class List {
     this.newItemInput()
     
     //SETUP REMOVE LIST BUTTON
-    let removeButton = document.querySelector(`.remove-${this.domName}`)
+    let removeButton = document.querySelector(`.removelist.r${this.domName}`)
     removeButton.addEventListener("click", () => {
       let lista = document.querySelector(`.article-${this.domName}`)
       lista.remove()
