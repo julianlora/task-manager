@@ -37,11 +37,21 @@ class List {
       <h1 class="title-${this.domName}">
         ${this.name}
         <meter class="progress-${this.domName}"></meter>
-        <button class="removelist r${this.domName}">x</button>
+        <span class="list-menu">
+          <button class="removelist r${this.domName}">x</button>
+        </span>
       </h1>
       <ul class="list-${this.domName}"=></ul>
     `;
     newList.innerHTML = content
+
+    let heights = [] 
+    document.querySelectorAll('article').forEach((e) => {
+      heights.push(e.clientHeight)
+    })
+    let articles = [...document.querySelectorAll('article')]
+    console.log(articles)
+
     document.querySelector("main").append(newList)
     document.querySelector(".new-list").value = ""
 
@@ -133,7 +143,7 @@ class List {
   optionsMenu(listElement){
 
     //add to DOM
-    let meter = document.querySelector(`.progress-${this.domName}`)
+    let removeButton = document.querySelector(`.removelist.r${this.domName}`)
     const optionsElement = document.createElement('div')
     optionsElement.setAttribute('class', 'dropdown')
     let content = `
@@ -144,7 +154,7 @@ class List {
       </div>
     `
     optionsElement.innerHTML = content
-    meter.insertAdjacentElement('afterend', optionsElement)
+    removeButton.insertAdjacentElement('beforebegin', optionsElement)
 
     //SETUP OPTIONS MENU
     /* When the user clicks on the button, 
