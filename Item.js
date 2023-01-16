@@ -41,8 +41,10 @@ class Item {
             <div class="root r${this.id}">
               <input class="checkbox-${this.id} c${this.list}" type="checkbox">
               <span class="text t${this.id}">${this.text}</span>
-              <button class="extend e${this.id}" hidden>v</button>
-              <button class="delete d${this.id}" hidden>x</button>
+              <span class="item-menu">
+                <button class="extend e${this.id}" hidden>+</button>
+                <button class="delete d${this.id}" hidden>x</button>
+              </span>
             </div>
           `
           element.innerHTML = content
@@ -51,8 +53,10 @@ class Item {
             <div class="root r${this.id}">
               <input class="checkbox-${this.id} c${this.list}" type="checkbox" checked>
               <span class="text t${this.id}">${this.text}</span>
-              <button class="extend e${this.id}" hidden>v</button>
-              <button class="delete d${this.id}" hidden>x</button>
+              <span class="item-menu">
+                <button class="extend e${this.id}" hidden>+</button>
+                <button class="delete d${this.id}" hidden>x</button>
+              </span>
             </div>
           `
           element.innerHTML = content
@@ -66,8 +70,10 @@ class Item {
         let content = `
           <div class="root r${this.id}">
             <b><span class="text t${this.id}">${this.text}</span></b>
-            <button class="extend e${this.id}" hidden>v</button>
-            <button class="delete d${this.id}" hidden>x</button>
+            <span class="item-menu">
+              <button class="extend e${this.id}" hidden>+</button>
+              <button class="delete d${this.id}" hidden>x</button>
+            </span>
           </div>
         `
         element.innerHTML = content
@@ -160,10 +166,11 @@ class Item {
 
       //EDIT
       let textElement = document.querySelector(`.text.t${this.id}`)
+      const rootElement = document.querySelector(`.root.r${this.id}`)
       textElement.addEventListener("click", (event) => {
 
         if (!element.classList.contains('editing') && window.getSelection().isCollapsed){
-          const rootElement = document.querySelector(`.root.r${this.id}`)
+          
           element.classList.add('editing', 'open')
           rootElement.hidden = true
           let edit = document.createElement('li')
@@ -214,15 +221,28 @@ class Item {
       const deleteButton = document.querySelector(`.delete.d${this.id}`)
       const extendButton = document.querySelector(`.extend.e${this.id}`)
       // BUTTON VISIBILITY
-      element.addEventListener("mouseover", () => {
+      rootElement.addEventListener("mouseover", (event) => {
         if (!element.classList.contains('editing')){
           deleteButton.hidden = false
           extendButton.hidden = false
         }
+        event.stopPropagation()
       })
-      element.addEventListener("mouseleave", () => {
-        deleteButton.hidden = true
-        extendButton.hidden = true
+      rootElement.addEventListener("mouseleave", (event) => {
+        if (!extendButton.classList.contains('open')){
+          deleteButton.hidden = true
+          extendButton.hidden = true
+          event.stopPropagation()
+        }
+      })
+      let buttons = [deleteButton, extendButton]
+      buttons.forEach((b) => {
+        b.addEventListener("mouseover", () => {
+          b.setAttribute("style", "background-color:#5f6368;")
+        })
+        b.addEventListener("mouseleave", () => {
+          b.setAttribute("style", "background-color:none;")
+        })
       })
       // DELETE
       deleteButton.addEventListener("click", () => {
@@ -414,7 +434,7 @@ class Item {
   const closeInput = (id) => {
     let extendButton = document.querySelector(`.extend.${id}`)
     document.querySelector(`.extension.${id}`).remove()
-    extendButton.innerText = "v"
+    extendButton.innerText = "+"
     extendButton.classList.remove("open")
   }
   
