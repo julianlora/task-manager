@@ -1,10 +1,11 @@
 [
     {
-        "name": "Web page",
+        "name": "Project",
         "items": 0,
         "progress": 0,
         "status": "none",
-        "domName": "Webpage",
-        "hideFinished": false
+        "domName": "Project",
+        "hideFinished": false,
+        "retracted": false
     }
 ]

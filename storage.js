@@ -5,7 +5,7 @@ function listOfItems(){
     let values = []
     let items = []
     let itemData = JSON.parse(localStorage.getItem('items'), function (key, value){
-        if (typeof value == 'object' && value != null && values.length != 0){
+        if (typeof value == 'object' && value != null && values.length != 0){ // if storage isn't empty
             let item = new Item(
                 values[0],
                 values[1],
@@ -16,6 +16,7 @@ function listOfItems(){
                 values[6],
                 values[7],
                 values[8],
+                values[9]
             )
             items.push(item)
             values = []
@@ -37,7 +38,8 @@ function listOfLists(){
                 values[2],
                 values[3],
                 values[4],
-                values[5]
+                values[5],
+                values[6]
             )
             lists.push(item)
             values = []
@@ -137,9 +139,51 @@ function updateList(list) {
     let data = listOfLists()
     let index = data.findIndex((element) => element.name == list.name)
     if (index != (-1)){
-        data.splice(index, 1, list)
-        localStorage.setItem('lists', JSON.stringify(data) )
+        let flag = 0
+        for (var prop in list) {
+            if (Object.prototype.hasOwnProperty.call(list, prop)) {
+                if (list[prop] != data[index][prop]){
+                    flag = 1
+                    break
+                }
+            }
+        }
+        if (flag == 1){ // changed
+            data.splice(index, 1, list)
+            localStorage.setItem('lists', JSON.stringify(data))
+            return 0
+        } else { // no changes
+            return 1
+        }
+    } else { // not found
+        return -1
     }
 }
 
-export {listOfItems, listOfLists, saveList, saveItem, removeItem, removeList, updateItem, updateList}
+// save localStorage data in a csv file
+(function(console){
+    console.save = function(data, filename){
+        if(!data) {
+            console.error('Console.save: No data')
+            return;
+        }
+        if(!filename) filename = 'console.json'
+        if(typeof data === "object"){
+            data = JSON.stringify(data, undefined, 4)
+        }
+        var blob = new Blob([data], {type: 'text/json'}),
+            e    = document.createEvent('MouseEvents'),
+            a    = document.createElement('a')
+        a.download = filename
+        a.href = window.URL.createObjectURL(blob)
+        a.dataset.downloadurl =  ['text/json', a.download, a.href].join(':')
+        e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
+        a.dispatchEvent(e)
+    }
+})(console)
+
+function dataToCsv(data, filename){
+    console.save(data, filename)
+}
+  
+export {listOfItems, listOfLists, saveList, saveItem, removeItem, removeList, updateItem, updateList, dataToCsv}

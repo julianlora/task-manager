@@ -1,4 +1,5 @@
 import Item from "./Item.js";
+import { buttonStyle } from "./Item.js";
 import * as storage from "./storage.js";
 
 class List {
@@ -10,6 +11,7 @@ class List {
     status,
     domName,
     hideFinished,
+    retracted
   ) {
     // Define properties:
     this.name = name;
@@ -18,6 +20,7 @@ class List {
     this.status = status;
     this.domName = domName
     this.hideFinished = hideFinished
+    this.retracted = retracted
   }
   // Add methods like normal functions
   addList(){
@@ -32,13 +35,13 @@ class List {
 
     //ADD LIST TO DOM
     const newList = document.createElement("article")
-    newList.setAttribute("class", `article-${this.domName}`)
+    newList.setAttribute("class", `mainlist ${this.domName}`)
     const content = `
-      <h1 class="title-${this.domName}">
+      <h1 class="title ${this.domName}">
         ${this.name}
-        <meter class="progress-${this.domName}"></meter>
-        <span class="list-menu">
-          <button class="removelist r${this.domName}">x</button>
+        <meter class="progress ${this.domName}"></meter>
+        <span class="listmenu">
+          <button class="removelist ${this.domName}">x</button>
         </span>
       </h1>
       <ul class="list-${this.domName}"=></ul>
@@ -56,85 +59,120 @@ class List {
     document.querySelector(".new-list").value = ""
 
     //SETUP NEW ITEM INPUT
-    this.newItemInput()
+    this.bottomMenu()
     
     //SETUP REMOVE LIST BUTTON
-    let removeButton = document.querySelector(`.removelist.r${this.domName}`)
+    let removeButton = document.querySelector(`.removelist.${this.domName}`)
     removeButton.addEventListener("click", () => {
-      let lista = document.querySelector(`.article-${this.domName}`)
+      let lista = document.querySelector(`.mainlist.${this.domName}`)
       lista.remove()
       storage.removeList(this.domName)
     }, false)
 
     this.optionsMenu(newList)
 
+    // RETRACTED
+    if (this.retracted){
+      this.retractList()
+    }
+
     //SAVE IN ARRAY AND LOCAL STORAGE
     storage.saveList(this)
   }
 
-  newItemInput(){
+  bottomMenu(){
 
-    if (document.querySelector(`.newitem-${this.domName}`) != undefined){ // if it exists already
-      document.querySelector(`.newitem-${this.domName}`).remove()
+    if (document.querySelector(`.bottom-menu.${this.domName}`) != undefined){ // if it exists already
+      document.querySelector(`.bottom-menu.${this.domName}`).remove()
     }
 
-    const newItemInput = document.createElement('li')
-    newItemInput.classList.add(`newitem-${this.domName}`)
+    const bottomMenu = document.createElement('div')
+    bottomMenu.classList.add('bottom-menu' ,`${this.domName}`)
     let content = `
-      <input class="input-${this.domName}">
-      <button class="additem-${this.domName}">Add as item</button>
-      <button class="addsublist-${this.domName}">Add as sublist</button>
+      <div class="newitem">
+        <input class="input-${this.domName}">
+        <button class="additem-${this.domName}">Add as item</button>
+        <button class="addsublist-${this.domName}">Add as sublist</button>
+      </div>
+      <br><button class="btn retractlist ${this.domName}">^</button>
     `
-    newItemInput.innerHTML = content
-    document.querySelector(`.list-${this.domName}`).insertAdjacentElement('beforeend', newItemInput)
+    bottomMenu.innerHTML = content
+    document.querySelector(`.list-${this.domName}`).insertAdjacentElement('afterend', bottomMenu)
 
-
+    // ADD ITEM BUTTON
     const listButton = document.querySelector(`.additem-${this.domName}`)
     listButton.addEventListener("click", () => {
       if (document.querySelector(`.input-${this.domName}`).value !== ""){
-        //ADD NEW ITEM
-        this.createItem()
+        this.createItem(this.domName, 'item', true)
       }
     })
 
+    //ADD SUBLIST BUTTON
     const sublistButton = document.querySelector(`.addsublist-${this.domName}`)
     sublistButton.addEventListener("click", () => {
       if (document.querySelector(`.input-${this.domName}`).value !== ""){
-        //ADD NEW SUBLIST
-        
-        this.createItem(undefined, 'sublist')
+        this.createItem(this.domName, 'sublist', true)
       }
+    })
+
+    // RETRACT BUTTON
+    const retractButton = document.querySelector(`.retractlist.${this.domName}`)
+    buttonStyle()
+    retractButton.addEventListener("click", () => {
+      this.retractList()
     })
   }
 
-  createItem(e, type) {
+  retractList(){
+    let button = document.querySelector(`.retractlist.${this.domName}`)
+    if (!document.querySelector(`.mainlist.${this.domName}`).classList.contains('retracted')){
+      document.querySelector(`.mainlist.${this.domName}`).classList.add('retracted')
+      button.innerText = 'v'
+      document.querySelector(`.list-${this.domName}`).hidden = true
+      this.retracted = true
+      storage.updateList(this)
+    } else {
+      document.querySelector(`.mainlist.${this.domName}`).classList.remove('retracted')
+      button.innerText = '^'
+      document.querySelector(`.list-${this.domName}`).hidden = false
+      this.retracted = false
+      storage.updateList(this)
+    }
+  }
+
+  createItem(data, type, input) {
+    // If item comes from input, 'data' must be id in case of subitem, and domName otherwise
+    // If item comes from storage, 'data' must be the item object
+
     //CREATE ITEM
-    if (e == undefined){
+    if (input){
       const item = new Item(
-        Date.now(),
-        document.querySelector(`.input-${this.domName}`).value,
-        this.domName,
+        'id' + Date.now().toString(),
+        document.querySelector(`.input-${data}`).value,
+        data,
         type == "sublist" ? "done" : "uncomplete",
         (new Date()).toDateString(),
         0,
         0,
         this.domName,
-        type == 'sublist' ? type : 'item'
+        type == 'sublist' ? type : 'item',
+        false
       )
       item.addItem(true, item.type)
     } else {
       const item = new Item(
-        e.id,
-        e.text,
-        e.list,
-        e.status,
-        e.creationDate,
-        e.subItems,
-        e.siblings,
-        e.mainList,
-        e.type
+        data.id,
+        data.text,
+        data.list,
+        data.status,
+        data.creationDate,
+        data.subItems,
+        data.siblings,
+        data.mainList,
+        data.type,
+        data.retracted
       )
-      item.addItem(false, e.type)
+      item.addItem(false, data.type)
       
     }
     
@@ -143,7 +181,7 @@ class List {
   optionsMenu(listElement){
 
     //add to DOM
-    let removeButton = document.querySelector(`.removelist.r${this.domName}`)
+    let removeButton = document.querySelector(`.removelist.${this.domName}`)
     const optionsElement = document.createElement('div')
     optionsElement.setAttribute('class', 'dropdown')
     let content = `
@@ -192,22 +230,6 @@ class List {
 
     // HIDE PROGRESS
 
-    // ADD SUBLIST
-    const sublistOption = document.querySelector(`.addsublist-${this.domName}`)
-    sublistOption.addEventListener("click", () => {
-      sublistOption.classList.add("open")
-
-      let sublistInput = document.createElement('li')
-      sublistInput.classList.add(`newsublist-${this.domName}`)
-      let content = `
-        <input class="newsublist-input-${this.domName}">
-        <button class="newsublist-button-${this.domName}">
-        Add sublist
-        </button>
-      `
-      sublistInput.innerHTML = content
-      document.querySelector(`.list-${this.domName}`).insertAdjacentElement('beforeend', sublistInput)
-    })
   }
 
   hideFinishedItems(){

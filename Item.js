@@ -11,7 +11,8 @@ class Item {
       subItems,
       siblings,
       mainList,
-      type
+      type,
+      retracted
     ) {
       // Define properties:}
       this.id = id;
@@ -23,14 +24,17 @@ class Item {
       this.siblings = siblings;
       this.mainList = mainList;
       this.type = type;
+      this.retracted = retracted
     }
     // Add methods like normal functions:
     
     addItem(input = false, type = 'item') {
       // ADD ITEM TO DOM
+
       const element = document.createElement("li")
-      element.classList.add(`item-${this.id}` , `parent-${this.list}`, `mainlist-${this.mainList}`)
-      element.setAttribute('id', this.id)
+      element.classList.add('item' , `parent-${this.list}`, `mainlist-${this.mainList}`)
+
+      element.setAttribute('id', isNaN(this.id) == false ? 'id' + this.id.toString() : this.id)
 
       if (this.text == ""){
         this.text = document.querySelector(`.input-${this.list}`).value
@@ -42,8 +46,9 @@ class Item {
               <input class="checkbox-${this.id} c${this.list}" type="checkbox">
               <span class="text t${this.id}">${this.text}</span>
               <span class="item-menu">
-                <button class="extend e${this.id}" hidden>+</button>
-                <button class="delete d${this.id}" hidden>x</button>
+                <button class="btn retract ${this.id}" hidden>-</button>
+                <button class="btn extend e${this.id}" hidden>+</button>
+                <button class="btn delete d${this.id}" hidden>x</button>
               </span>
             </div>
           `
@@ -54,8 +59,9 @@ class Item {
               <input class="checkbox-${this.id} c${this.list}" type="checkbox" checked>
               <span class="text t${this.id}">${this.text}</span>
               <span class="item-menu">
-                <button class="extend e${this.id}" hidden>+</button>
-                <button class="delete d${this.id}" hidden>x</button>
+                <button class="btn retract ${this.id}" hidden>-</button>
+                <button class="btn extend e${this.id}" hidden>+</button>
+                <button class="btn delete d${this.id}" hidden>x</button>
               </span>
             </div>
           `
@@ -68,16 +74,16 @@ class Item {
         this.createCheckbox()
       } else {
         let content = `
-          <div class="root r${this.id}">
+          <div class="root r${this.id} sublist">
             <b><span class="text t${this.id}">${this.text}</span></b>
             <span class="item-menu">
-              <button class="extend e${this.id}" hidden>+</button>
-              <button class="delete d${this.id}" hidden>x</button>
+              <button class="btn retract ${this.id}" hidden>-</button>
+              <button class="btn extend e${this.id}" hidden>+</button>
+              <button class="btn delete d${this.id}" hidden>x</button>
             </span>
           </div>
         `
         element.innerHTML = content
-        element.classList.add('sublist')
         document.querySelector(`.list-${this.list}`).insertAdjacentElement("beforeend", element)
       }
 
@@ -90,6 +96,10 @@ class Item {
       this.updateProgress(input)
       if (input && this.type == 'item'){
         this.checkboxEvent(false)
+      }
+
+      if (this.retracted){
+        this.retractItem()
       }
     }
 
@@ -105,7 +115,7 @@ class Item {
     checkboxEvent(checked){
       this.updateProgress() // update subitems and siblings
       let checkbox = document.querySelector(`.checkbox-${this.id}.c${this.list}`)
-      let element = document.querySelector(`.item-${this.id}.parent-${this.list}`)
+      let element = document.querySelector(`#${this.id}`)
       let parent = storage.listOfItems().find((e) => e.id == this.list)
       if (checked){ 
         checkbox.checked = true
@@ -126,7 +136,7 @@ class Item {
           if (parent.type == 'item'){
             parent.checkboxEvent(checked)
           } else {
-            let parentElement = document.querySelector(`.item-${parent.id}.parent-${parent.list}`)
+            let parentElement = document.querySelector(`#${parent.id}`)
             parentElement.classList.add("done")
             parent.status = 'done'
             storage.updateItem(parent)
@@ -151,7 +161,7 @@ class Item {
             if (parent.type == 'item'){
               parent.checkboxEvent(checked)
             } else {
-              let parentElement = document.querySelector(`.item-${parent.id}.parent-${parent.list}`)
+              let parentElement = document.querySelector(`#${parent.id}`)
               parentElement.classList.remove('done')
               parent.status = 'uncomplete'
               storage.updateItem(parent)
@@ -220,11 +230,15 @@ class Item {
 
       const deleteButton = document.querySelector(`.delete.d${this.id}`)
       const extendButton = document.querySelector(`.extend.e${this.id}`)
+      const retractButton = document.querySelector(`.retract.${this.id}`)
       // BUTTON VISIBILITY
       rootElement.addEventListener("mouseover", (event) => {
         if (!element.classList.contains('editing')){
           deleteButton.hidden = false
           extendButton.hidden = false
+          if (this.subItems > 0){
+            retractButton.hidden = false
+          }
         }
         event.stopPropagation()
       })
@@ -232,27 +246,18 @@ class Item {
         if (!extendButton.classList.contains('open')){
           deleteButton.hidden = true
           extendButton.hidden = true
+          retractButton.hidden = true
           event.stopPropagation()
         }
       })
-      let buttons = [deleteButton, extendButton]
-      buttons.forEach((b) => {
-        b.addEventListener("mouseover", () => {
-          b.setAttribute("style", "background-color:#5f6368;")
-        })
-        b.addEventListener("mouseleave", () => {
-          b.setAttribute("style", "background-color:none;")
-        })
+      // BUTTON STYLE
+      buttonStyle()
+
+      // RETRACT SUBITEMS
+      retractButton.addEventListener("click", () => {
+        this.retractItem()
       })
-      // DELETE
-      deleteButton.addEventListener("click", () => {
-        element.remove()
-        storage.removeItem(this.id)
-        this.updateProgress()
-        if (this.siblings == 1 && this.list != this.mainList) { // if it's the only subitem and its parent it's not the mainList remove unnecesary <ul> element
-          document.querySelector(`.list-${this.list}`).remove()
-        }
-      })
+
       // INPUT SUBITEM
       extendButton.addEventListener("click", () => {
         if (!extendButton.classList.contains("open")){
@@ -301,7 +306,34 @@ class Item {
           saveEdit(openElement)
         }
       })
+      // DELETE
+      deleteButton.addEventListener("click", () => {
+        element.remove()
+        storage.removeItem(this.id)
+        this.updateProgress()
+        if (this.siblings == 1 && this.list != this.mainList) { // if it's the only subitem and its parent it's not the mainList remove unnecesary <ul> element
+          document.querySelector(`.list-${this.list}`).remove()
+        }
+      })
 
+    }
+
+    retractItem(){
+      let root = document.querySelector(`.root.r${this.id}`)
+      let button = document.querySelector(`.retract.${this.id}`)
+      if (!root.classList.contains("retracted")){
+        root.classList.add('retracted')
+        button.innerText = 'v'
+        document.querySelector(`.list-${this.id}`).hidden = true
+        this.retracted = true
+        storage.updateItem(this)
+      } else {
+        root.classList.remove('retracted')
+        button.innerText = '-'
+        document.querySelector(`.list-${this.id}`).hidden = false
+        this.retracted = false
+        storage.updateItem(this)
+      }
     }
 
     loadSubItems(){
@@ -316,6 +348,7 @@ class Item {
       if (input == true ? document.querySelector(`.input-${this.id}`).value !== "" : true){
         
         this.subItems = Array.from(document.querySelectorAll(`.parent-${this.id}`)).length // to know the updated subitems amount (upgradeProgress was causing trouble)
+        let creator = storage.listOfLists().find((l) => l.domName == this.mainList)
 
         if (this.subItems == 0){ // add a new <ul> only if its the first subitem to add
           let list = document.createElement('ul')
@@ -323,35 +356,17 @@ class Item {
           if (input){
             document.querySelector(`.extension.e${this.id}`).insertAdjacentElement('beforebegin', list)
           } else {
-            document.querySelector(`.item-${this.id}.parent-${this.list}`).insertAdjacentElement('beforeend', list)
+            document.querySelector(`#${this.id}`).insertAdjacentElement('beforeend', list)
           }
         }
-    
+
+        
+        
         if (input){
-          let newItem = new Item(
-            Date.now(), 
-            document.querySelector(`.input-${this.id}`).value, 
-            this.id, 
-            "uncomplete",
-            (new Date()).toDateString(),
-            0,
-            0, 
-            this.mainList,
-            'item')
-          newItem.addItem(input = true)
+          creator.createItem(this.id, 'item', true)
           document.querySelector(`.input-${this.id}`).value = ""
         } else {
-          let newItem = new Item(
-            subItem.id, 
-            subItem.text,
-            this.id, 
-            subItem.status,
-            subItem.creationDate,
-            subItem.subItems, 
-            subItem.siblings, 
-            this.mainList,
-            subItem.type)
-          newItem.addItem()
+          creator.createItem(subItem, subItem.type, false)
         }
         
       }
@@ -390,7 +405,7 @@ class Item {
           }
         })
         progress.items = total
-        let bar = document.querySelector(`.progress-${this.list}`)
+        let bar = document.querySelector(`.progress.${this.list}`)
         bar.setAttribute("value", cant.toString())
         bar.setAttribute("min", "0")
         bar.setAttribute("max", progress.items.toString())
@@ -398,7 +413,7 @@ class Item {
       }
 
       // UPDATE NEW ITEM BUTTON POSITION
-      storage.listOfLists().find((l) => l.domName == this.mainList).newItemInput()
+      storage.listOfLists().find((l) => l.domName == this.mainList).bottomMenu()
     }
 
     itemAge() {
@@ -437,5 +452,19 @@ class Item {
     extendButton.innerText = "+"
     extendButton.classList.remove("open")
   }
-  
+
+  const buttonStyle = () => {
+    let buttons = document.querySelectorAll('.btn')
+    
+    buttons.forEach((b) => {
+      b.addEventListener("mouseover", () => {
+        b.setAttribute("style", "background-color:#5f6368;")
+      })
+      b.addEventListener("mouseleave", () => {
+        b.setAttribute("style", "background-color:none;")
+      })
+    })
+  }
+
   export default Item;
+  export {buttonStyle}

@@ -65,7 +65,7 @@ article {
     overflow-wrap: break-word;
 }
 
-.extend , .delete {
+.btn{
     background:none;
     border-color: #e8eaed;
     border-radius: 50%;
@@ -77,11 +77,21 @@ article {
     font-size: 1rem;
 }
 
+.retractlist{
+    display: block;
+    margin:0 auto;
+}
+
+.newitem {
+    display: flex;
+    justify-content: center;
+}
+
 .item-menu{
     float: right;
 }
 
-.list-menu{
+.listmenu{
     float: right;
 }
 
@@ -92,4 +102,12 @@ main {
 
 input[type=checkbox] {
     opacity: 0.5;
+}
+
+.retracted{
+    background-color: dimgray;
+}
+
+.sublist{
+    border-bottom: 1px solid #5f6368;
 }

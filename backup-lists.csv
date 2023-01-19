@@ -1,0 +1,29 @@
+[
+    {
+        "name": "Web page",
+        "items": 0,
+        "progress": 0,
+        "status": "none",
+        "domName": "Webpage",
+        "hideFinished": true,
+        "retracted": false
+    },
+    {
+        "name": "Personal",
+        "items": 0,
+        "progress": 0,
+        "status": "none",
+        "domName": "Personal",
+        "hideFinished": false,
+        "retracted": false
+    },
+    {
+        "name": "Trabajo",
+        "items": 0,
+        "progress": 0,
+        "status": "none",
+        "domName": "Trabajo",
+        "hideFinished": false,
+        "retracted": false
+    }
+]
