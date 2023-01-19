@@ -4,15 +4,15 @@ import * as storage from "./storage.js";
 
 // BACKUP download data to csv file
 //storage.dataToCsv(JSON.parse(localStorage.getItem('items')), 'backup-items.csv')
-storage.dataToCsv(JSON.parse(localStorage.getItem('lists')), 'example-lists.csv')
+//storage.dataToCsv(JSON.parse(localStorage.getItem('lists')), 'example-lists.csv')
 
 // CLEAR DATA
 // localStorage.clear()
 
 // LOAD EXAMPLE
 if(JSON.parse(localStorage.getItem('lists')) == null){
-  let csvitems = await (await fetch('backup-items.csv')).text();
-  let csvlists = await (await fetch('backup-lists.csv')).text(); // assign csv data to a variable
+  let csvitems = await (await fetch('example-items.csv')).text();
+  let csvlists = await (await fetch('example-lists.csv')).text(); // assign csv data to a variable
   if (csvitems[0] != '<' && csvlists[0] != '<'){
     localStorage.setItem('items', csvitems)
     localStorage.setItem('lists', csvlists)
