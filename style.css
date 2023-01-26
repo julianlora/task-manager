@@ -1,3 +1,33 @@
+main {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    transition: all 500ms;
+}
+
+body {
+    background-color: #202124;
+    color:#e8eaed;
+    font-family: Roboto,Arial,sans-serif;
+}
+
+article {
+    border: solid #5f6368;
+    border-width:1px 1px 1px 1px;
+    margin: 8px;
+    width: 450px;
+    height: max-content;
+    overflow-wrap: break-word;
+}
+
+h1 {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.listmenu{
+    float: right;
+}
+
 .dropbtn {
     background-color: #3498DB;
     color: white;
@@ -19,50 +49,56 @@
 .dropdown-content {
     display: none;
     position: absolute;
-    background-color: #f1f1f1;
+    background-color:#202124;
+    border: solid 1px #5f6368;
     min-width: 160px;
     overflow: auto;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    /* border-width: 0; */
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 60%), 0 2px 6px 2px rgb(0 0 0 / 30%);
+    border-radius: 4px;
     z-index: 1;
+    right: 0px;
 }
 
-.dropdown-content a {
-    color: black;
+.dropdown-content button {
+    color: white;
     padding: 12px 16px;
     text-decoration: none;
     display: block;
+    width: 160px;
 }
-
-.dropdown a:hover {background-color: #ddd;}
 
 .show {display: block;}
 
-.root{
-    padding: 5px 45px 5px 5px;
+.paper-btn{
+    background:none;
+    border-style:none;
+    margin:0;
+    cursor: pointer;
+    user-select: none;
 }
 
-body {
-    background-color: #202124;
-    color:#e8eaed;
-    font-family: Roboto,Arial,sans-serif;
+.paper-btn:not(:last-of-type){
+    border-bottom: 1px solid #5f6368;
 }
 
-h1 {
-    padding-left: 20px;
-    padding-right: 20px;
-}
+.paper-btn:hover {background-color: #5f6368;}
 
 ul {
     list-style-type: none;
+    padding-left: 35px;
+    position: relative;
 }
 
-article {
-    border: solid #5f6368;
-    border-width:1px 1px 1px 1px;
-    margin: 8px;
-    width: 450px;
-    height: max-content;
-    overflow-wrap: break-word;
+/* .root.hover .text{
+    border-top: 1px solid #5f6368;
+    border-left: 1px solid #5f6368;
+    border-right: 1px solid #5f6368;
+    border-bottom: 1px solid #5f6368;
+} */
+
+.mainlist{
+    padding-left: 0px;
 }
 
 .btn{
@@ -75,11 +111,122 @@ article {
     cursor: pointer;
     color:#e8eaed;
     font-size: 1rem;
+    user-select: none;
 }
 
-.retractlist{
-    display: block;
-    margin:0 auto;
+.root{
+    display:flex;
+    position: relative;
+    padding: 5px 5px 5px 25px;
+}
+
+.root.over{
+    border-bottom: 1px solid #5f6368;
+}
+
+.root.sublist{
+    font-weight: bold;
+}
+
+.emptyrow{
+    padding: 5px 5px 5px 25px;
+    color:#202124;
+    user-select: none;
+}
+
+.drag{
+    position:absolute;
+    left:8px;
+    cursor:move;
+    font-weight:lighter;
+}
+
+input[type=checkbox] {
+    opacity: 0.5;
+    position: absolute;
+    vertical-align:text-top;
+}
+
+.text{
+    padding-left: 25px;
+    padding-right: 45px;
+    cursor: text;
+}
+
+.text.sublist{
+    padding-left: 0;
+}
+
+.edit:not(.sublist){
+    padding-left: 25px;
+}
+
+.item-menu{
+    position: absolute;
+    right: 15px;
+}
+
+.btn.retracted{
+    position:absolute;
+    right: 50px;
+}
+
+.retracted{
+    background-color: #5f6368;
+    transition: all 500ms;
+}
+
+.btn.addsubitem{
+    position:absolute;
+    bottom:5px;
+    left:24px;
+    border-style: solid;
+    background: none;
+    opacity: 0.3;
+    transition: all 50ms;
+    z-index: 1;
+}
+
+.btn.addsubitem.hover{
+    opacity:1;
+    background: #5f6368;
+}
+
+.linework{
+    content:'';
+    position:absolute;
+    width: 1px;
+    height: calc(100% - 27px);
+    background-color:#e8eaed;
+    z-index: -1; 
+    opacity: 0.3;
+    transition: all 50ms;
+}
+
+.linework.hover{
+    opacity:1;
+}
+
+.linework2{
+    content:'';
+    position:absolute;
+    width: 25px;
+    height: 1px;
+    background-color:#e8eaed;
+    z-index: -1;
+    left: 0px;
+    bottom: 16px;
+}
+
+.linework3{
+    content:'';
+    position:absolute;
+    width: 1px;
+    height: 20px;
+    background-color:#e8eaed;
+    z-index: -1;
+    left: 0px;
+    bottom: 16px;
 }
 
 .newitem {
@@ -87,27 +234,7 @@ article {
     justify-content: center;
 }
 
-.item-menu{
-    float: right;
-}
-
-.listmenu{
-    float: right;
-}
-
-main {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-}
-
-input[type=checkbox] {
-    opacity: 0.5;
-}
-
-.retracted{
-    background-color: dimgray;
-}
-
-.sublist{
-    border-bottom: 1px solid #5f6368;
+.retractlist{
+    display: block;
+    margin:0 auto;
 }

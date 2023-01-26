@@ -1,5 +1,4 @@
 import Item from "./Item.js";
-import { buttonStyle } from "./Item.js";
 import * as storage from "./storage.js";
 
 class List {
@@ -35,7 +34,7 @@ class List {
 
     //ADD LIST TO DOM
     const newList = document.createElement("article")
-    newList.setAttribute("class", `mainlist ${this.domName}`)
+    newList.setAttribute("class", `paper ${this.domName}`)
     const content = `
       <h1 class="title ${this.domName}">
         ${this.name}
@@ -44,7 +43,7 @@ class List {
           <button class="removelist ${this.domName}">x</button>
         </span>
       </h1>
-      <ul class="list-${this.domName}"=></ul>
+      <ul class="mainlist list-${this.domName} "=></ul>
     `;
     newList.innerHTML = content
 
@@ -64,7 +63,7 @@ class List {
     //SETUP REMOVE LIST BUTTON
     let removeButton = document.querySelector(`.removelist.${this.domName}`)
     removeButton.addEventListener("click", () => {
-      let lista = document.querySelector(`.mainlist.${this.domName}`)
+      let lista = document.querySelector(`.paper.${this.domName}`)
       lista.remove()
       storage.removeList(this.domName)
     }, false)
@@ -117,7 +116,6 @@ class List {
 
     // RETRACT BUTTON
     const retractButton = document.querySelector(`.retractlist.${this.domName}`)
-    buttonStyle()
     retractButton.addEventListener("click", () => {
       this.retractList()
     })
@@ -125,14 +123,14 @@ class List {
 
   retractList(){
     let button = document.querySelector(`.retractlist.${this.domName}`)
-    if (!document.querySelector(`.mainlist.${this.domName}`).classList.contains('retracted')){
-      document.querySelector(`.mainlist.${this.domName}`).classList.add('retracted')
+    if (!document.querySelector(`.paper.${this.domName}`).classList.contains('retracted')){
+      document.querySelector(`.paper.${this.domName}`).classList.add('retracted')
       button.innerText = 'v'
       document.querySelector(`.list-${this.domName}`).hidden = true
       this.retracted = true
       storage.updateList(this)
     } else {
-      document.querySelector(`.mainlist.${this.domName}`).classList.remove('retracted')
+      document.querySelector(`.paper.${this.domName}`).classList.remove('retracted')
       button.innerText = '^'
       document.querySelector(`.list-${this.domName}`).hidden = false
       this.retracted = false
@@ -156,7 +154,8 @@ class List {
         0,
         this.domName,
         type == 'sublist' ? type : 'item',
-        false
+        false,
+        Array.from(document.querySelectorAll(`.parent-${data}`)).length
       )
       item.addItem(true, item.type)
     } else {
@@ -170,7 +169,8 @@ class List {
         data.siblings,
         data.mainList,
         data.type,
-        data.retracted
+        data.retracted,
+        data.index
       )
       item.addItem(false, data.type)
       
@@ -187,8 +187,8 @@ class List {
     let content = `
       <button class="dropbtn options-${this.domName}">Options</button>
       <div id="myDropdown-${this.domName}" class="dropdown-content">
-        <button class="hidetasks-${this.domName} show">Hide finished tasks</button>
-        <button class="hideprogress-${this.domName} show">Hide progress</button>
+        <button class="hidetasks-${this.domName} paper-btn show">Hide finished tasks</button>
+        <button class="hideprogress-${this.domName} paper-btn show">Hide progress</button>
       </div>
     `
     optionsElement.innerHTML = content
@@ -237,10 +237,13 @@ class List {
     let items = document.querySelectorAll(`.mainlist-${this.domName}.done`)
       if (this.hideFinished){
         items.forEach((e) => {
-          e.hidden = true
+          if (!e.classList.contains('sublist')){
+            e.hidden = true
+          }
         })
         hideButton.innerText = "Show finished tasks"
         hideButton.classList.remove("show")
+
       } else {
         items.forEach((e) => {
           e.hidden = false
@@ -248,6 +251,25 @@ class List {
         hideButton.classList.add("show")
         hideButton.innerText = "Hide finished tasks"
       }
+
+      // VISIBILITY OF EMPTY ROWS
+      document.querySelectorAll(`.list-${this.domName} .emptyrow`).forEach((emptyrow) => {
+        let id = emptyrow.classList[1]
+        let parent = storage.listOfItems().find((i) => i.id == id)
+        if (parent.status == 'done' && parent.type == 'sublist'){
+          if (this.hideFinished){
+            emptyrow.hidden = false
+          } else {
+            if(parent.subItems == 0){
+              emptyrow.hidden = false
+            } else {
+              emptyrow.hidden = true
+            }
+          }
+        } else {
+          emptyrow.hidden = true
+        }
+      })
   }
 }
 

@@ -16,7 +16,8 @@ function listOfItems(){
                 values[6],
                 values[7],
                 values[8],
-                values[9]
+                values[9],
+                values[10]
             )
             items.push(item)
             values = []

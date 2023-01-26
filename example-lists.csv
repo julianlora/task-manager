@@ -1,10 +1,10 @@
 [
     {
-        "name": "Project",
+        "name": "Example project",
         "items": 0,
         "progress": 0,
         "status": "none",
-        "domName": "Project",
+        "domName": "Exampleproject",
         "hideFinished": false,
         "retracted": false
     }

@@ -1,10 +1,11 @@
 import List from "./List.js";
 import Item from "./Item.js";
 import * as storage from "./storage.js";
+import { itemSetup, listSetup } from "./setup.js";
 
 // BACKUP download data to csv file
 //storage.dataToCsv(JSON.parse(localStorage.getItem('items')), 'backup-items.csv')
-//storage.dataToCsv(JSON.parse(localStorage.getItem('lists')), 'example-lists.csv')
+//storage.dataToCsv(JSON.parse(localStorage.getItem('lists')), 'backup-lists.csv')
 
 // CLEAR DATA
 // localStorage.clear()
@@ -67,3 +68,14 @@ button.addEventListener("click", () =>{
   }
 
 }, false)
+
+// ITEM FUNCTIONALITIES
+document.querySelectorAll('.item').forEach((element) => {
+  // itemSetup(element)
+})
+
+// LIST FUNCTIONALITIES
+// document.querySelectorAll('ul').forEach((list) => {
+//   listSetup(list)
+// })
+
