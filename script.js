@@ -3,13 +3,6 @@ import Item from "./Item.js";
 import * as storage from "./storage.js";
 import { itemSetup, listSetup } from "./setup.js";
 
-// BACKUP download data to csv file
-//storage.dataToCsv(JSON.parse(localStorage.getItem('items')), 'backup-items.csv')
-//storage.dataToCsv(JSON.parse(localStorage.getItem('lists')), 'backup-lists.csv')
-
-// CLEAR DATA
-// localStorage.clear()
-
 // LOAD EXAMPLE
 if(JSON.parse(localStorage.getItem('lists')) == null){
   let csvitems = await (await fetch('example-items.csv')).text();
@@ -69,13 +62,30 @@ button.addEventListener("click", () =>{
 
 }, false)
 
-// ITEM FUNCTIONALITIES
-document.querySelectorAll('.item').forEach((element) => {
-  // itemSetup(element)
+// LOAD BACKUP BUTTON
+const loadBackupBtn = document.querySelector('.load-backup')
+loadBackupBtn.addEventListener('click', async () => {
+  let csvitems = await (await fetch('backup-items.csv')).text();
+  let csvlists = await (await fetch('backup-lists.csv')).text(); // assign csv data to a variable
+  if (csvitems[0] != '<' && csvlists[0] != '<'){
+    localStorage.clear()
+    localStorage.setItem('items', csvitems)
+    localStorage.setItem('lists', csvlists)
+    loadBackupBtn.innerText = 'refresh page'
+  } else {
+    console.log('backup files not found')
+  }
 })
 
-// LIST FUNCTIONALITIES
-// document.querySelectorAll('ul').forEach((list) => {
-//   listSetup(list)
-// })
+// DOWNLOAD BACKUP BUTTON
+const downloadBackUpBtn = document.querySelector('.download-backup')
+downloadBackUpBtn.addEventListener('click', () => {
+  if(JSON.parse(localStorage.getItem('lists')) != null){
+    // Download data to csv file
+    storage.dataToCsv(JSON.parse(localStorage.getItem('items')), 'backup-items.csv')
+    storage.dataToCsv(JSON.parse(localStorage.getItem('lists')), 'backup-lists.csv')
+  }
+})
 
+// CLEAR DATA
+// localStorage.clear()
